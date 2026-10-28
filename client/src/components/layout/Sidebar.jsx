@@ -47,8 +47,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
       {/* Brand Header */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-lg shadow-md shrink-0">
-            <FolderKanban className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0 border border-indigo-500/30">
+            <FolderKanban className="w-4 h-4" />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col truncate">
@@ -89,10 +89,10 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
                 onClick={() => setIsMobileOpen(false)}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all group',
+                    'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors group',
                     isActive
-                      ? 'bg-brand-50 dark:bg-brand-950/70 text-brand-700 dark:text-brand-300 font-semibold'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
+                      ? 'bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-semibold'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
                   )
                 }
                 title={isCollapsed ? item.name : undefined}
@@ -121,10 +121,10 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
                   onClick={() => setIsMobileOpen(false)}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all group',
+                      'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors group',
                       isActive
-                        ? 'bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 font-semibold'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
+                        ? 'bg-slate-100 dark:bg-slate-800 text-purple-600 dark:text-purple-400 font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
                     )
                   }
                   title={isCollapsed ? item.name : undefined}

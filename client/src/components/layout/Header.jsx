@@ -101,7 +101,7 @@ export function Header({ setIsMobileOpen, onOpenNewTaskModal }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search tasks, teams, tags... (Press Enter)"
-            className="w-full text-xs rounded-xl bg-slate-100/80 dark:bg-slate-800/80 pl-9 pr-4 py-2 border border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
+            className="w-full text-xs rounded-lg bg-slate-100 dark:bg-slate-800/80 pl-9 pr-4 py-2 border border-slate-200/60 dark:border-slate-800 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-colors"
           />
         </form>
       </div>

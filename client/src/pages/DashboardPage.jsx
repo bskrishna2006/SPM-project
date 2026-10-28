@@ -70,21 +70,25 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Welcome & Quick Action Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-brand-600 to-indigo-700 text-white shadow-md">
+      {/* Workspace Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-brand-100">
-            {isAdmin ? 'Administrative Control Center' : isLeader ? 'Team Leadership Dashboard' : 'Academic Workstation'}
-          </span>
-          <h1 className="text-2xl font-display font-bold mt-1">
-            Welcome back, {user?.name?.split(' ')[0]} 👋
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-medium">
+              {isAdmin ? 'System Telemetry // Admin' : isLeader ? 'Team Leadership // Workspace' : 'Academic Workstation // Overview'}
+            </span>
+            <span className="text-slate-300 dark:text-slate-700">·</span>
+            <span className="text-[11px] font-mono text-slate-500">Term 2026-27</span>
+          </div>
+          <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+            {user?.name ? user.name : 'Academic Dashboard'}
           </h1>
-          <p className="text-xs text-brand-100 mt-1 max-w-xl">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
             {isAdmin
-              ? 'Oversee academic projects, monitor student account activity, and review system audit records.'
+              ? 'Institutional oversight, user access policies, and academic project audit logs.'
               : isLeader
-              ? 'Coordinate project milestones, review submitted deliverables, and balance member workloads.'
-              : 'Track your assignments, upcoming deadlines, project milestones, and team tasks.'}
+              ? 'Milestone tracking, team workload distribution, and deliverable reviews.'
+              : 'Coursework assignments, project milestones, and upcoming deadlines.'}
           </p>
         </div>
 
@@ -92,7 +96,7 @@ export function DashboardPage() {
           <Button
             onClick={() => setIsTaskModalOpen(true)}
             size="sm"
-            className="bg-white text-brand-700 hover:bg-brand-50 shadow-sm"
+            variant="primary"
             icon={Plus}
           >
             Create Task
@@ -100,8 +104,7 @@ export function DashboardPage() {
           <Button
             onClick={() => navigate('/calendar')}
             size="sm"
-            variant="secondary"
-            className="bg-brand-700/60 hover:bg-brand-700 text-white border-0"
+            variant="outline"
             icon={Calendar}
           >
             Calendar
@@ -113,65 +116,57 @@ export function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Metric 1 */}
         <Card className="hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-              <CheckSquare className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 {isAdmin ? 'Total Tasks' : isLeader ? 'Team Tasks' : 'Assigned Tasks'}
               </p>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-0.5">
-                {metrics.totalTasks || metrics.totalAssigned || 0}
-              </h3>
+              <span className="w-2 h-2 rounded-full bg-slate-400" />
             </div>
+            <h3 className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100 mt-2">
+              {metrics.totalTasks || metrics.totalAssigned || 0}
+            </h3>
           </CardContent>
         </Card>
 
         {/* Metric 2: Completed */}
         <Card className="hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-5 h-5" />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">Completed</p>
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
             </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Completed</p>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-0.5">
-                {metrics.completed || metrics.completedTasks || 0}
-              </h3>
-            </div>
+            <h3 className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100 mt-2">
+              {metrics.completed || metrics.completedTasks || 0}
+            </h3>
           </CardContent>
         </Card>
 
         {/* Metric 3: In Progress & In Review */}
         <Card className="hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                {isLeader ? 'Awaiting Review' : 'In Progress'}
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {isLeader ? 'In Review' : 'In Progress'}
               </p>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-0.5">
-                {isLeader ? metrics.inReviewTasks || 0 : metrics.inProgress || metrics.inProgressTasks || 0}
-              </h3>
+              <span className="w-2 h-2 rounded-full bg-indigo-500" />
             </div>
+            <h3 className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100 mt-2">
+              {isLeader ? metrics.inReviewTasks || 0 : metrics.inProgress || metrics.inProgressTasks || 0}
+            </h3>
           </CardContent>
         </Card>
 
         {/* Metric 4: Overdue Alert */}
         <Card className="hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
-              <AlertTriangle className="w-5 h-5" />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">Overdue</p>
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
             </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Overdue Tasks</p>
-              <h3 className="text-xl font-bold text-rose-600 dark:text-rose-400 mt-0.5">
-                {metrics.overdue || metrics.overdueTasks || 0}
-              </h3>
-            </div>
+            <h3 className="text-2xl font-mono font-bold text-rose-600 dark:text-rose-400 mt-2">
+              {metrics.overdue || metrics.overdueTasks || 0}
+            </h3>
           </CardContent>
         </Card>
       </div>

@@ -156,12 +156,12 @@ export function TasksPage() {
 
         <div className="flex items-center gap-2.5">
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
             <button
               onClick={() => setViewMode('kanban')}
-              className={`p-1.5 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`p-1.5 px-3 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors ${
                 viewMode === 'kanban'
-                  ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-sm'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                   : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
@@ -170,9 +170,9 @@ export function TasksPage() {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-1.5 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`p-1.5 px-3 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-sm'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                   : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
@@ -195,8 +195,8 @@ export function TasksPage() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+      <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
           {/* Search Input */}
           <div className="relative col-span-1 sm:col-span-2">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -205,7 +205,7 @@ export function TasksPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by title, description, tags..."
-              className="w-full text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              className="w-full text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-colors"
             />
           </div>
 
@@ -213,7 +213,7 @@ export function TasksPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none"
+            className="text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           >
             <option value="">All Statuses</option>
             <option value="To Do">To Do</option>
@@ -226,7 +226,7 @@ export function TasksPage() {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none"
+            className="text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           >
             <option value="">All Priorities</option>
             <option value="Low">Low</option>

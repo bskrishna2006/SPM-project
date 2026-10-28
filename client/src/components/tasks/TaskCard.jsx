@@ -32,7 +32,7 @@ export function TaskCard({
       draggable={isDraggable}
       onDragStart={(e) => onDragStart && onDragStart(e, task._id)}
       onClick={() => onClick && onClick(task)}
-      className={`group relative bg-white dark:bg-slate-900 border rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-150 cursor-pointer select-none ${
+      className={`group relative bg-white dark:bg-slate-900 border rounded-lg p-3.5 shadow-sm transition-all duration-150 cursor-pointer select-none ${
         overdue
           ? 'border-rose-200 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10'
           : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
@@ -42,14 +42,14 @@ export function TaskCard({
       <div className="flex items-center justify-between gap-2 mb-2">
         <PriorityBadge priority={task.priority} />
         {task.team && (
-          <span className="text-[10px] font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/50 px-2 py-0.5 rounded-md truncate max-w-[120px]">
+          <span className="text-[10px] font-mono font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/50 px-2 py-0.5 rounded truncate max-w-[120px]">
             {task.team.name}
           </span>
         )}
       </div>
 
       {/* Task Title */}
-      <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+      <h4 className="text-xs md:text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
         {task.title}
       </h4>
 

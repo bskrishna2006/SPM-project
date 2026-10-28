@@ -60,10 +60,10 @@ export function KanbanBoard({ tasks = [], onTaskClick, onStatusChange, onAddNewT
             onDragOver={(e) => handleDragOver(e, col.id)}
             onDragLeave={(e) => handleDragLeave(e, col.id)}
             onDrop={(e) => handleDrop(e, col.id)}
-            className={`flex flex-col rounded-2xl bg-slate-100/70 dark:bg-slate-900/40 border-2 p-3 transition-colors duration-150 min-h-[500px] ${
+            className={`flex flex-col rounded-xl bg-slate-100/60 dark:bg-slate-900/40 border p-3 transition-colors duration-150 min-h-[500px] ${
               isTarget
-                ? 'border-brand-500 bg-brand-50/20 dark:bg-brand-950/20'
-                : 'border-slate-200/80 dark:border-slate-800/80'
+                ? 'border-indigo-500 bg-indigo-50/20 dark:bg-indigo-950/20'
+                : 'border-slate-200 dark:border-slate-800'
             }`}
           >
             {/* Column Header */}
