@@ -11,6 +11,7 @@ import {
   acceptInvitation,
   rejectInvitation,
   removeMember,
+  cancelInvitation,
 } from '../controllers/teamController.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -28,6 +29,7 @@ router.post('/', validate(createTeamSchema), createTeam);
 router.get('/invitations/my', getUserInvitations);
 router.post('/invitations/:id/accept', acceptInvitation);
 router.post('/invitations/:id/reject', rejectInvitation);
+router.delete('/invitations/:id', cancelInvitation);
 
 // Team specific endpoints
 router.get('/:id', getTeamById);

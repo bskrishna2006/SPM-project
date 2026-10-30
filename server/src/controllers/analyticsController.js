@@ -197,6 +197,7 @@ export async function getDashboardAnalytics(req, res, next) {
         overdueTasks,
         recentActivity,
         priorityDist,
+        recentTasks,
       ] = await Promise.all([
         User.countDocuments(),
         User.countDocuments({ isActive: true }),
@@ -213,6 +214,7 @@ export async function getDashboardAnalytics(req, res, next) {
         Task.aggregate([
           { $group: { _id: '$priority', count: { $sum: 1 } } },
         ]),
+        Task.find().populate('team', 'name').populate('assignees', 'name avatar').sort({ dueDate: 1 }).limit(6),
       ]);
 
       const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -234,6 +236,7 @@ export async function getDashboardAnalytics(req, res, next) {
           completionRate,
         },
         priorityDistribution: priorityDist.map((p) => ({ priority: p._id, count: p.count })),
+        recentTasks,
         recentActivity,
       });
     }

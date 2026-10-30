@@ -89,7 +89,8 @@ export function App() {
                     <Route element={<DashboardLayout />}>
                       <Route path="/" element={<Navigate to="/dashboard" replace />} />
                       <Route path="/dashboard" element={<DashboardPage />} />
-                      <Route path="/tasks" element={<TasksPage />} />
+                      <Route path="/my-tasks" element={<TasksPage view="my" />} />
+                      <Route path="/tasks" element={<TasksPage view="all" />} />
                       <Route path="/tasks/:id" element={<TasksPage />} />
                       <Route path="/calendar" element={<CalendarPage />} />
                       <Route path="/teams" element={<TeamsPage />} />

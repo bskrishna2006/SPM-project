@@ -183,7 +183,19 @@ export async function getTasks(req, res, next) {
     if (priority) query.priority = priority;
     if (type) query.type = type;
     if (team) query.team = team;
-    if (assignee) query.assignees = assignee;
+
+    // View filter: 'my' returns tasks assigned to user or personal tasks created by user
+    if (req.query.view === 'my' || assignee === 'me') {
+      query.$and = query.$and || [];
+      query.$and.push({
+        $or: [
+          { assignees: req.user._id },
+          { createdBy: req.user._id, type: 'personal' },
+        ],
+      });
+    } else if (assignee) {
+      query.assignees = assignee;
+    }
 
     if (search) {
       query.$and = query.$and || [];

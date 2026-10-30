@@ -7,9 +7,15 @@ import { Modal } from '../common/Modal';
 import { Input, Textarea, Select } from '../common/Input';
 import { Button } from '../common/Button';
 
-export function TaskModal({ isOpen, onClose, taskToEdit = null }) {
+export function TaskModal({
+  isOpen,
+  onClose,
+  taskToEdit = null,
+  defaultTeamId = null,
+  initialAssigneeId = null,
+}) {
   const toast = useToast();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
 
   const [title, setTitle] = useState('');
@@ -23,6 +29,7 @@ export function TaskModal({ isOpen, onClose, taskToEdit = null }) {
   const [dueDate, setDueDate] = useState('');
   const [estimatedHours, setEstimatedHours] = useState(0);
   const [tagsInput, setTagsInput] = useState('');
+  const [assigneeSearch, setAssigneeSearch] = useState('');
   const [errors, setErrors] = useState({});
 
   // Fetch teams the user is member or leader of
@@ -35,9 +42,20 @@ export function TaskModal({ isOpen, onClose, taskToEdit = null }) {
     enabled: isOpen,
   });
 
-  const teams = teamsData || [];
+  // Fetch all students if admin or if assigning without team
+  const { data: allStudentsData } = useQuery({
+    queryKey: ['allStudentsForTaskModal'],
+    queryFn: async () => {
+      const res = await api.get('/students?limit=150');
+      return res.data.data.students || [];
+    },
+    enabled: isOpen && (isAdmin || user?.role === 'admin' || Boolean(initialAssigneeId)),
+  });
 
-  // Populate form if editing
+  const teams = teamsData || [];
+  const allStudents = allStudentsData || [];
+
+  // Populate form if editing or when opened
   useEffect(() => {
     if (taskToEdit) {
       setTitle(taskToEdit.title || '');
@@ -54,18 +72,19 @@ export function TaskModal({ isOpen, onClose, taskToEdit = null }) {
     } else {
       setTitle('');
       setDescription('');
-      setType('personal');
+      setType(defaultTeamId ? 'team' : initialAssigneeId || isAdmin ? 'academic_project' : 'personal');
       setStatus('To Do');
       setPriority('Medium');
-      setTeam('');
-      setAssignees([user?._id].filter(Boolean));
+      setTeam(defaultTeamId || '');
+      setAssignees(initialAssigneeId ? [initialAssigneeId] : [user?._id].filter(Boolean));
       setStartDate('');
       setDueDate('');
       setEstimatedHours(0);
       setTagsInput('');
     }
+    setAssigneeSearch('');
     setErrors({});
-  }, [taskToEdit, isOpen, user]);
+  }, [taskToEdit, isOpen, user, defaultTeamId, initialAssigneeId, isAdmin]);
 
   const saveMutation = useMutation({
     mutationFn: async (payload) => {
@@ -125,7 +144,7 @@ export function TaskModal({ isOpen, onClose, taskToEdit = null }) {
     saveMutation.mutate(payload);
   };
 
-  // Get eligible assignees from selected team
+  // Get eligible assignees from selected team or from all students for admin
   const selectedTeamObj = teams.find((t) => t._id === team);
   const eligibleAssignees = selectedTeamObj
     ? [
@@ -135,14 +154,35 @@ export function TaskModal({ isOpen, onClose, taskToEdit = null }) {
           name: m.user?.name || 'Team Member',
         })),
       ]
+    : isAdmin || user?.role === 'admin'
+    ? allStudents.map((s) => ({
+        _id: s._id,
+        name: `${s.name} (${s.department || s.role || 'Student'})`,
+      }))
     : [{ _id: user?._id, name: `${user?.name || 'You'} (Self)` }];
+
+  const filteredAssignees = assigneeSearch.trim()
+    ? eligibleAssignees.filter((a) => a.name.toLowerCase().includes(assigneeSearch.toLowerCase()))
+    : eligibleAssignees;
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={taskToEdit ? 'Edit Task' : 'Create New Task'}
-      description="Plan academic workloads, set deadlines, and coordinate deliverables."
+      title={
+        taskToEdit
+          ? 'Edit Task'
+          : initialAssigneeId
+          ? 'Assign Task to Student'
+          : isAdmin
+          ? 'Assign Academic Task'
+          : 'Create New Task'
+      }
+      description={
+        isAdmin
+          ? 'Assign deliverables, capstone milestones, or coursework to students.'
+          : 'Plan academic workloads, set deadlines, and coordinate deliverables.'
+      }
       maxWidth="max-w-xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -193,14 +233,16 @@ export function TaskModal({ isOpen, onClose, taskToEdit = null }) {
             onChange={(e) => {
               setTeam(e.target.value);
               if (!e.target.value) {
-                setType('personal');
-                setAssignees([user?._id]);
+                setType(isAdmin ? 'academic_project' : 'personal');
+                if (!isAdmin && !initialAssigneeId) {
+                  setAssignees([user?._id]);
+                }
               } else {
                 setType('team');
               }
             }}
           >
-            <option value="">None (Personal Task)</option>
+            <option value="">None (Individual Academic Task)</option>
             {teams.map((t) => (
               <option key={t._id} value={t._id}>
                 {t.name}
@@ -220,14 +262,31 @@ export function TaskModal({ isOpen, onClose, taskToEdit = null }) {
           </Select>
         </div>
 
-        {/* Assignees Selection if Team Selected */}
-        {team && (
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Assignee(s)
-            </label>
-            <div className="flex flex-wrap gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-              {eligibleAssignees.map((a) => {
+        {/* Assignees Selection (Team or Admin student allocation) */}
+        {(team || isAdmin || user?.role === 'admin' || initialAssigneeId) && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {isAdmin || user?.role === 'admin' ? 'Assign to Student(s) *' : 'Team Assignee(s)'}
+              </label>
+              <span className="text-[10px] text-slate-400 font-mono">
+                {assignees.length} selected
+              </span>
+            </div>
+
+            {/* Quick Filter if list is long */}
+            {eligibleAssignees.length > 5 && (
+              <input
+                type="text"
+                placeholder="Filter students by name or department..."
+                value={assigneeSearch}
+                onChange={(e) => setAssigneeSearch(e.target.value)}
+                className="w-full text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none mb-1.5"
+              />
+            )}
+
+            <div className="flex flex-wrap gap-1.5 p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 max-h-36 overflow-y-auto">
+              {filteredAssignees.map((a) => {
                 const isSelected = assignees.includes(a._id);
                 return (
                   <button
@@ -242,12 +301,18 @@ export function TaskModal({ isOpen, onClose, taskToEdit = null }) {
                     }}
                     className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${
                       isSelected
-                        ? 'bg-brand-600 text-white shadow-sm'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-100'
+                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/60'
                     }`}
                   >
+                    {isSelected ? '✓ ' : '+ '}
                     {a.name}
                   </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
                 );
               })}
             </div>

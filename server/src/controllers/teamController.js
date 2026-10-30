@@ -465,3 +465,27 @@ export async function removeMember(req, res, next) {
     return next(err);
   }
 }
+
+export async function cancelInvitation(req, res, next) {
+  try {
+    const invitation = await Invitation.findById(req.params.id);
+    if (!invitation) {
+      return sendError(res, 'Invitation not found', null, 404);
+    }
+
+    const team = await Team.findById(invitation.team);
+    if (!team) {
+      return sendError(res, 'Team not found', null, 404);
+    }
+
+    const isLeader = team.leader.toString() === req.user._id.toString();
+    if (!isLeader && req.user.role !== 'admin') {
+      return sendError(res, 'Only the team leader or administrator can cancel invitations.', null, 403);
+    }
+
+    await Invitation.findByIdAndDelete(invitation._id);
+    return sendSuccess(res, 'Invitation cancelled successfully.');
+  } catch (err) {
+    return next(err);
+  }
+}

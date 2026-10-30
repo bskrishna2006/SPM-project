@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ShieldCheck, Search, CheckCircle2, XCircle, UserX, UserCheck, Shield } from 'lucide-react';
+import { ShieldCheck, Search, CheckCircle2, XCircle, UserX, UserCheck, Shield, Plus, CheckSquare } from 'lucide-react';
 import api from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Button } from '../../components/common/Button';
 import { RoleBadge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
+import { TaskModal } from '../../components/tasks/TaskModal';
 
 export function AdminUsersPage() {
   const { user } = useAuth();
@@ -17,6 +18,10 @@ export function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [selectedUserForRole, setSelectedUserForRole] = useState(null);
   const [newRole, setNewRole] = useState('student');
+
+  // Task assignment from Admin Panel
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [taskTargetUser, setTaskTargetUser] = useState(null);
 
   const { data: usersData, isLoading } = useQuery({
     queryKey: ['adminUsers', { search, roleFilter }],
@@ -54,14 +59,27 @@ export function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <ShieldCheck className="w-6 h-6 text-purple-600" />
-          User Administration
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Manage system privileges, activate/deactivate accounts, and adjust student roles.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <ShieldCheck className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            User Administration
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Manage system privileges, activate/deactivate accounts, and assign academic tasks to students.
+          </p>
+        </div>
+
+        <Button
+          onClick={() => {
+            setTaskTargetUser(null);
+            setIsTaskModalOpen(true);
+          }}
+          icon={Plus}
+          size="sm"
+        >
+          Assign Task to Student
+        </Button>
       </div>
 
       {/* Filter and Search */}
@@ -125,7 +143,24 @@ export function AdminUsersPage() {
                   </td>
 
                   <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {/* Direct Task Assignment for Students and Leaders */}
+                      {u.role !== 'admin' && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="text-xs py-1 flex items-center gap-1 text-slate-800 dark:text-slate-200"
+                          onClick={() => {
+                            setTaskTargetUser(u);
+                            setIsTaskModalOpen(true);
+                          }}
+                          title={`Assign task to ${u.name}`}
+                        >
+                          <CheckSquare className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                          Assign Task
+                        </Button>
+                      )}
+
                       <Button
                         size="sm"
                         variant="outline"
@@ -156,6 +191,16 @@ export function AdminUsersPage() {
           </table>
         </div>
       </div>
+
+      {/* Task Creation Modal for Admin Direct Assignment */}
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => {
+          setIsTaskModalOpen(false);
+          setTaskTargetUser(null);
+        }}
+        initialAssigneeId={taskTargetUser?._id}
+      />
 
       {/* Change Role Modal */}
       {selectedUserForRole && (

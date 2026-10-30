@@ -42,14 +42,14 @@ export function TaskCard({
       <div className="flex items-center justify-between gap-2 mb-2">
         <PriorityBadge priority={task.priority} />
         {task.team && (
-          <span className="text-[10px] font-mono font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/50 px-2 py-0.5 rounded truncate max-w-[120px]">
+          <span className="text-[10px] font-mono font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded truncate max-w-[120px]">
             {task.team.name}
           </span>
         )}
       </div>
 
       {/* Task Title */}
-      <h4 className="text-xs md:text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+      <h4 className="text-xs md:text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
         {task.title}
       </h4>
 

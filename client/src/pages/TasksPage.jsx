@@ -25,11 +25,13 @@ import { EmptyState } from '../components/common/EmptyState';
 import { formatDate, isOverdue } from '../lib/utils';
 import { PriorityBadge, StatusBadge } from '../components/common/Badge';
 
-export function TasksPage() {
+export function TasksPage({ view: initialView = 'all' }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const toast = useToast();
-  const { user } = useAuth();
+  const { user, isAdmin, isTeamLeader } = useAuth();
+
+  const isMyTasks = initialView === 'my' || searchParams.get('view') === 'my';
 
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'list'
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -42,6 +44,7 @@ export function TasksPage() {
   const [priorityFilter, setPriorityFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [teamFilter, setTeamFilter] = useState('');
+  const [assigneeFilter, setAssigneeFilter] = useState(isMyTasks ? 'me' : '');
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [dueTodayOnly, setDueTodayOnly] = useState(false);
   const [sortBy, setSortBy] = useState('dueDate');
@@ -51,20 +54,36 @@ export function TasksPage() {
   useEffect(() => {
     const q = searchParams.get('search');
     if (q !== null) setSearch(q);
-    const view = searchParams.get('view');
-    if (view === 'my') {
-      // My tasks
+    if (isMyTasks) {
+      setAssigneeFilter('me');
     }
-  }, [searchParams]);
+  }, [searchParams, isMyTasks]);
 
   // Fetch Tasks with current filters
   const { data: tasksData, isLoading } = useQuery({
     queryKey: [
       'tasks',
-      { search, statusFilter, priorityFilter, typeFilter, teamFilter, overdueOnly, dueTodayOnly, sortBy, sortOrder },
+      {
+        view: isMyTasks ? 'my' : 'all',
+        search,
+        statusFilter,
+        priorityFilter,
+        typeFilter,
+        teamFilter,
+        assigneeFilter: isMyTasks ? 'me' : assigneeFilter,
+        overdueOnly,
+        dueTodayOnly,
+        sortBy,
+        sortOrder,
+      },
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
+      if (isMyTasks) {
+        params.set('view', 'my');
+      } else if (assigneeFilter) {
+        params.set('assignee', assigneeFilter);
+      }
       if (search) params.set('search', search);
       if (statusFilter) params.set('status', statusFilter);
       if (priorityFilter) params.set('priority', priorityFilter);
@@ -89,8 +108,26 @@ export function TasksPage() {
     },
   });
 
+  // Fetch Students for assignee filter (in All Tasks mode)
+  const { data: studentsData } = useQuery({
+    queryKey: ['taskAssigneesList'],
+    enabled: !isMyTasks,
+    queryFn: async () => {
+      const res = await api.get('/students?limit=100');
+      return res.data.data.students || [];
+    },
+  });
+
   const tasks = tasksData?.tasks || [];
   const teams = teamsData || [];
+  const students = studentsData || [];
+
+  // Computed summary metrics
+  const totalCount = tasks.length;
+  const inProgressCount = tasks.filter((t) => t.status === 'In Progress').length;
+  const inReviewCount = tasks.filter((t) => t.status === 'In Review').length;
+  const completedCount = tasks.filter((t) => t.status === 'Completed').length;
+  const overdueCount = tasks.filter((t) => isOverdue(t.dueDate) && t.status !== 'Completed').length;
 
   // Status Change Mutation with Optimistic Updates
   const statusMutation = useMutation({
@@ -136,47 +173,62 @@ export function TasksPage() {
     setPriorityFilter('');
     setTypeFilter('');
     setTeamFilter('');
+    if (!isMyTasks) setAssigneeFilter('');
     setOverdueOnly(false);
     setDueTodayOnly(false);
-    setSearchParams({});
+    setSearchParams(isMyTasks ? { view: 'my' } : {});
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Top Header & View Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-          <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">
-            Task Management
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide border ${
+              isMyTasks
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200/80 dark:border-blue-900/60'
+            }`}>
+              {isMyTasks ? 'PERSONAL WORKSPACE' : 'ACADEMIC REPOSITORY'}
+            </span>
+            <span className="text-xs text-slate-400 font-mono">
+              {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            {isMyTasks ? 'My Tasks' : 'All Tasks & Team Backlog'}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Organize personal workloads, track team projects, and maintain deadline visibility.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-xl">
+            {isMyTasks
+              ? `Action items, milestones, and deliverables assigned to ${user?.name || 'you'}.`
+              : 'Cross-team collaboration board, sprints, and project-wide deliverables.'}
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800/90 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
             <button
               onClick={() => setViewMode('kanban')}
-              className={`p-1.5 px-3 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all ${
                 viewMode === 'kanban'
-                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200/60 dark:border-slate-700'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
-              <Kanban className="w-3.5 h-3.5" />
+              <Kanban className="w-3.5 h-3.5 text-slate-500" />
               Kanban
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-1.5 px-3 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all ${
                 viewMode === 'list'
-                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200/60 dark:border-slate-700'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
-              <List className="w-3.5 h-3.5" />
+              <List className="w-3.5 h-3.5 text-slate-500" />
               List
             </button>
           </div>
@@ -189,23 +241,57 @@ export function TasksPage() {
             icon={Plus}
             size="sm"
           >
-            Create Task
+            New Task
           </Button>
         </div>
       </div>
 
+      {/* Quick Summary Metric Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/90 dark:border-slate-800 flex items-center justify-between">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Workload</span>
+          <span className="text-base font-mono font-semibold text-slate-900 dark:text-slate-100">
+            {totalCount < 10 ? `0${totalCount}` : totalCount}
+          </span>
+        </div>
+        <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/90 dark:border-slate-800 flex items-center justify-between">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">In Progress</span>
+          <span className="text-base font-mono font-semibold text-blue-600 dark:text-blue-400">
+            {inProgressCount < 10 ? `0${inProgressCount}` : inProgressCount}
+          </span>
+        </div>
+        <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/90 dark:border-slate-800 flex items-center justify-between">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">In Review</span>
+          <span className="text-base font-mono font-semibold text-purple-600 dark:text-purple-400">
+            {inReviewCount < 10 ? `0${inReviewCount}` : inReviewCount}
+          </span>
+        </div>
+        <div className={`p-3 bg-white dark:bg-slate-900 rounded-lg border flex items-center justify-between ${
+          overdueCount > 0
+            ? 'border-rose-200 dark:border-rose-900/50 bg-rose-50/20 dark:bg-rose-950/20'
+            : 'border-slate-200/90 dark:border-slate-800'
+        }`}>
+          <span className={`text-xs font-medium ${overdueCount > 0 ? 'text-rose-600 dark:text-rose-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+            Overdue
+          </span>
+          <span className={`text-base font-mono font-semibold ${overdueCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'}`}>
+            {overdueCount < 10 ? `0${overdueCount}` : overdueCount}
+          </span>
+        </div>
+      </div>
+
       {/* Filter & Search Bar */}
-      <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
+      <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-lg space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
           {/* Search Input */}
           <div className="relative col-span-1 sm:col-span-2">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by title, description, tags..."
-              className="w-full text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-colors"
+              placeholder="Search tasks, descriptions, tags..."
+              className="w-full text-xs rounded-md bg-slate-50 dark:bg-slate-800/80 pl-8 pr-3 py-1.5 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white transition-colors"
             />
           </div>
 
@@ -213,7 +299,7 @@ export function TasksPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-900"
           >
             <option value="">All Statuses</option>
             <option value="To Do">To Do</option>
@@ -226,7 +312,7 @@ export function TasksPage() {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-900"
           >
             <option value="">All Priorities</option>
             <option value="Low">Low</option>
@@ -235,58 +321,71 @@ export function TasksPage() {
             <option value="Urgent">Urgent</option>
           </select>
 
+          {/* If All Tasks, show Assignee Filter */}
+          {!isMyTasks ? (
+            <select
+              value={assigneeFilter}
+              onChange={(e) => setAssigneeFilter(e.target.value)}
+              className="text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-900"
+            >
+              <option value="">All Assignees</option>
+              <option value="me">Assigned to Me</option>
+              {students.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s.name} ({s.role})
+                </option>
+              ))}
+            </select>
+          ) : (
+            /* If My Tasks, show Task Type Filter */
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-900"
+            >
+              <option value="">All Types (Team & Personal)</option>
+              <option value="team">Team Projects</option>
+              <option value="personal">Personal Tasks</option>
+              <option value="academic">Academic Milestones</option>
+            </select>
+          )}
+
           {/* Team Filter */}
           <select
             value={teamFilter}
             onChange={(e) => setTeamFilter(e.target.value)}
-            className="text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none"
+            className="text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-900"
           >
-            <option value="">All Teams & Personal</option>
+            <option value="">All Teams</option>
             {teams.map((t) => (
               <option key={t._id} value={t._id}>
                 {t.name}
               </option>
             ))}
           </select>
-
-          {/* Sort Filter */}
-          <select
-            value={`${sortBy}-${sortOrder}`}
-            onChange={(e) => {
-              const [field, order] = e.target.value.split('-');
-              setSortBy(field);
-              setSortOrder(order);
-            }}
-            className="text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none"
-          >
-            <option value="dueDate-asc">Due Date (Earliest)</option>
-            <option value="dueDate-desc">Due Date (Latest)</option>
-            <option value="createdAt-desc">Newest Created</option>
-            <option value="priority-desc">Highest Priority</option>
-          </select>
         </div>
 
-        {/* Quick Filter Pills */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+        {/* Quick Filter Pills & Sort */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800 text-xs">
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setOverdueOnly(!overdueOnly)}
-              className={`px-2.5 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-all flex items-center gap-1.5 border ${
                 overdueOnly
-                  ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-semibold'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 font-semibold'
+                  : 'bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
               <AlertTriangle className="w-3.5 h-3.5" />
-              Overdue Tasks Only
+              Overdue Only
             </button>
 
             <button
               onClick={() => setDueTodayOnly(!dueTodayOnly)}
-              className={`px-2.5 py-1 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-all flex items-center gap-1.5 border ${
                 dueTodayOnly
-                  ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-semibold'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-semibold'
+                  : 'bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
               <Calendar className="w-3.5 h-3.5" />
@@ -294,13 +393,30 @@ export function TasksPage() {
             </button>
           </div>
 
-          <button
-            onClick={handleClearFilters}
-            className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1"
-          >
-            <RotateCcw className="w-3 h-3" />
-            Reset Filters
-          </button>
+          <div className="flex items-center gap-3">
+            <select
+              value={`${sortBy}-${sortOrder}`}
+              onChange={(e) => {
+                const [field, order] = e.target.value.split('-');
+                setSortBy(field);
+                setSortOrder(order);
+              }}
+              className="text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent px-2 py-1 text-slate-600 dark:text-slate-400 focus:outline-none"
+            >
+              <option value="dueDate-asc">Due Date (Earliest)</option>
+              <option value="dueDate-desc">Due Date (Latest)</option>
+              <option value="createdAt-desc">Newest Created</option>
+              <option value="priority-desc">Highest Priority</option>
+            </select>
+
+            <button
+              onClick={handleClearFilters}
+              className="text-xs font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center gap-1 transition-colors"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Reset
+            </button>
+          </div>
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 
 export function Badge({ children, className, variant = 'default', size = 'sm', ...props }) {
-  const base = 'inline-flex items-center font-mono font-medium rounded-md select-none tracking-tight';
+  const base = 'inline-flex items-center font-mono font-medium rounded select-none tracking-tight';
 
   const sizes = {
     xs: 'text-[10px] px-1.5 py-0.5 gap-1',
@@ -14,7 +14,7 @@ export function Badge({ children, className, variant = 'default', size = 'sm', .
     default:
       'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700',
     primary:
-      'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60',
+      'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60',
     success:
       'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60',
     warning:
@@ -36,10 +36,10 @@ export function Badge({ children, className, variant = 'default', size = 'sm', .
 
 export function PriorityBadge({ priority, className }) {
   const priorityConfig = {
-    Low: { variant: 'default', dotColor: 'bg-slate-400 dark:bg-slate-500', label: 'Low' },
+    Low: { variant: 'default', dotColor: 'bg-slate-400', label: 'Low' },
     Medium: { variant: 'info', dotColor: 'bg-sky-500', label: 'Medium' },
     High: { variant: 'warning', dotColor: 'bg-amber-500', label: 'High' },
-    Urgent: { variant: 'danger', dotColor: 'bg-rose-500 animate-pulse', label: 'Urgent' },
+    Urgent: { variant: 'danger', dotColor: 'bg-rose-500', label: 'Urgent' },
   };
 
   const config = priorityConfig[priority] || { variant: 'default', dotColor: 'bg-slate-400', label: priority };
@@ -54,9 +54,9 @@ export function PriorityBadge({ priority, className }) {
 export function StatusBadge({ status, className }) {
   const statusConfig = {
     'To Do': { variant: 'default', dotColor: 'bg-slate-400' },
-    'In Progress': { variant: 'primary', dotColor: 'bg-indigo-500' },
-    'In Review': { variant: 'purple', dotColor: 'bg-purple-500' },
-    'Completed': { variant: 'success', dotColor: 'bg-emerald-500' },
+    'In Progress': { variant: 'primary', dotColor: 'bg-blue-600' },
+    'In Review': { variant: 'purple', dotColor: 'bg-purple-600' },
+    'Completed': { variant: 'success', dotColor: 'bg-emerald-600' },
   };
 
   const config = statusConfig[status] || { variant: 'default', dotColor: 'bg-slate-400' };
